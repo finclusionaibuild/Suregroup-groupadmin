@@ -2,10 +2,7 @@ import React from 'react';
 import { 
   Users,
   MessageSquare,
-  ShoppingCart,
-  Settings,
-  Building,
-  Shield
+  Settings
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -52,19 +49,8 @@ export const LandingPage: React.FC = () => {
 
           {/* Role Selection Cards */}
           <div className="mt-16 max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
-              {/* Product Admin */}
-              <Link to="/role/product-admin" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-200 cursor-pointer group">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-teal-500 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform">
-                    <Building className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Product Admin</h3>
-                  <p className="text-sm text-gray-600 mb-4">Platform management and oversight</p>
-                </div>
-              </Link>
-
-              {/* Group Admin */}
+            <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6 mb-8">
+              {/* Group Admin only */}
               <Link to="/role/group-admin" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-200 cursor-pointer group">
                 <div className="text-center">
                   <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-teal-500 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform">
@@ -72,50 +58,6 @@ export const LandingPage: React.FC = () => {
                   </div>
                   <h3 className="text-lg font-bold text-gray-900 mb-2">Group Admin</h3>
                   <p className="text-sm text-gray-600 mb-4">Group management and member oversight</p>
-                </div>
-              </Link>
-
-              {/* Member */}
-              <Link to="/role/member" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-200 cursor-pointer group">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-teal-500 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform">
-                    <Users className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Member</h3>
-                  <p className="text-sm text-gray-600 mb-4">Community participation and engagement</p>
-                </div>
-              </Link>
-
-              {/* Super Admin */}
-              <Link to="/role/super-admin" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-200 cursor-pointer group">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-teal-500 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform">
-                    <Shield className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Super Admin</h3>
-                  <p className="text-sm text-gray-600 mb-4">System-wide management and control</p>
-                </div>
-              </Link>
-
-              {/* Vendor */}
-              <Link to="/role/vendor" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-200 cursor-pointer group">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-teal-500 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform">
-                    <ShoppingCart className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Vendor</h3>
-                  <p className="text-sm text-gray-600 mb-4">Service provider and marketplace seller</p>
-                </div>
-              </Link>
-
-              {/* Developer */}
-              <Link to="/role/developer" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-200 cursor-pointer group">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-teal-500 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform">
-                    <Settings className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Developer</h3>
-                  <p className="text-sm text-gray-600 mb-4">API access and platform integration</p>
                 </div>
               </Link>
             </div>

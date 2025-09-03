@@ -11,12 +11,7 @@ import { DashboardRouter } from './components/common/DashboardRouter';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { Suspense, lazy } from 'react';
 
-const SuperAdminLanding = lazy(() => import('./components/user-types/SuperAdmin'));
-const ProductAdminLanding = lazy(() => import('./components/user-types/ProductAdmin'));
 const GroupAdminLanding = lazy(() => import('./components/user-types/GroupAdmin'));
-const MemberLanding = lazy(() => import('./components/user-types/Member'));
-const VendorLanding = lazy(() => import('./components/user-types/Vendor'));
-const DeveloperLanding = lazy(() => import('./components/user-types/Developer'));
 
 const AppRoutes: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -24,51 +19,12 @@ const AppRoutes: React.FC = () => {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route
-        path="/role/super-admin"
-        element={
-          <Suspense fallback={<div className="p-6">Loading...</div>}>
-            <SuperAdminLanding />
-          </Suspense>
-        }
-      />
-      <Route
-        path="/role/product-admin"
-        element={
-          <Suspense fallback={<div className="p-6">Loading...</div>}>
-            <ProductAdminLanding />
-          </Suspense>
-        }
-      />
+      {/* Group Admin only */}
       <Route
         path="/role/group-admin"
         element={
           <Suspense fallback={<div className="p-6">Loading...</div>}>
             <GroupAdminLanding />
-          </Suspense>
-        }
-      />
-      <Route
-        path="/role/member"
-        element={
-          <Suspense fallback={<div className="p-6">Loading...</div>}>
-            <MemberLanding />
-          </Suspense>
-        }
-      />
-      <Route
-        path="/role/vendor"
-        element={
-          <Suspense fallback={<div className="p-6">Loading...</div>}>
-            <VendorLanding />
-          </Suspense>
-        }
-      />
-      <Route
-        path="/role/developer"
-        element={
-          <Suspense fallback={<div className="p-6">Loading...</div>}>
-            <DeveloperLanding />
           </Suspense>
         }
       />
