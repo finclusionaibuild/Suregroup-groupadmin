@@ -2,7 +2,8 @@ import React from 'react';
 import { 
   Users,
   MessageSquare,
-  Settings
+  Settings,
+  ShoppingCart
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
