@@ -19,7 +19,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ groups, logo, onFeatureSelect,
 
   const handleItemClick = (itemId: string) => {
     if (itemId === 'dashboard') {
-      // Handle dashboard navigation if needed
+      if (onFeatureSelect) {
+        onFeatureSelect('');
+      }
+      setIsOpen(false);
       return;
     }
     if (onFeatureSelect) {

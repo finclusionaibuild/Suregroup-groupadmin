@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Plus, ShoppingCart, Edit, Trash2, Eye, Star, DollarSign, Package, TrendingUp } from 'lucide-react';
+import { Search, Plus, ShoppingCart, Edit, Trash2, Eye, Star, DollarSign, Package, Check } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -139,7 +139,6 @@ export const MarketplaceManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState<'all' | Product['status']>('all');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [newProduct, setNewProduct] = useState({
@@ -422,7 +421,6 @@ export const MarketplaceManagement: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => setSelectedProduct(product)}
                         className="text-blue-600 hover:text-blue-900"
                       >
                         <Eye className="w-4 h-4" />

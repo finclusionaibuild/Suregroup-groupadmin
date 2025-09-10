@@ -11,12 +11,13 @@ import { PerformanceTracking } from '../features/PerformanceTracking';
 import { ReportsFlags } from '../features/ReportsFlags';
 import { WalletManagement } from '../features/WalletManagement';
 import { RewardsReferrals } from '../features/RewardsReferrals';
-import { BenefitManagement } from '../features/BenefitManagement';
 import { MarketplaceManagement } from '../features/MarketplaceManagement';
 import { RatingsReviews } from '../features/RatingsReviews';
 import { NotificationsAlerts } from '../features/NotificationsAlerts';
 import { ChatMessaging } from '../features/ChatMessaging';
 import { ProfileSettings } from '../features/ProfileSettings';
+import { DonationManagement } from '../features/DonationManagement';
+import { UserTourGuide } from '../features/UserTourGuide';
 
 interface FeatureRouterProps {
   featureId: string;
@@ -30,11 +31,14 @@ export const FeatureRouter: React.FC<FeatureRouterProps> = ({ featureId }) => {
       return <GroupManagement />;
     case 'group-setup':
       return <GroupSetup />;
+    case 'user-tour':
+      return <UserTourGuide />;
     case 'membership-management':
       return <MembershipManagement />;
     case 'approval-workflow':
       return <ApprovalWorkflow />;
     case 'event-management':
+    case 'events':
       return <EventManagement />;
     case 'votings':
       return <Votings />;
@@ -46,6 +50,10 @@ export const FeatureRouter: React.FC<FeatureRouterProps> = ({ featureId }) => {
       return <ReportsFlags />;
     case 'wallet-management':
       return <WalletManagement />;
+    case 'donation-management':
+      return <DonationManagement />;
+    case 'marketplace-management':
+      return <MarketplaceManagement />;
     case 'referrals-rewards':
       return <RewardsReferrals />;
     case 'notifications-alerts':

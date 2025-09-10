@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, Plus, Users, Calendar, Settings, Eye, Edit, Trash2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Search, Users, Calendar, Settings, Eye, Edit, Trash2 } from 'lucide-react';
 import { GroupData } from '../../types';
 
 export const GroupManagement: React.FC = () => {
@@ -12,7 +12,8 @@ export const GroupManagement: React.FC = () => {
       memberCount: 245,
       status: 'active',
       createdBy: 'Pastor John',
-      createdAt: '2025-01-01T00:00:00Z'
+      createdAt: '2025-01-01T00:00:00Z',
+      profileImage: 'https://images.pexels.com/photos/208359/pexels-photo-208359.jpeg?auto=compress&cs=tinysrgb&w=200'
     },
     {
       id: '2',
@@ -22,7 +23,8 @@ export const GroupManagement: React.FC = () => {
       memberCount: 67,
       status: 'active',
       createdBy: 'Youth Pastor Sarah',
-      createdAt: '2025-01-05T00:00:00Z'
+      createdAt: '2025-01-05T00:00:00Z',
+      profileImage: 'https://images.pexels.com/photos/1682499/pexels-photo-1682499.jpeg?auto=compress&cs=tinysrgb&w=200'
     },
     {
       id: '3',
@@ -32,20 +34,35 @@ export const GroupManagement: React.FC = () => {
       memberCount: 156,
       status: 'active',
       createdBy: 'Union Rep Mike',
-      createdAt: '2025-01-10T00:00:00Z'
+      createdAt: '2025-01-10T00:00:00Z',
+      profileImage: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=200'
     }
   ]);
+
+  // Persist groups to localStorage and hydrate on load
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('groups');
+      if (raw) {
+        const parsed = JSON.parse(raw) as GroupData[];
+        if (Array.isArray(parsed)) {
+          setGroups(parsed);
+        }
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('groups', JSON.stringify(groups));
+    } catch {}
+  }, [groups]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'church' | 'union' | 'association' | 'community'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<GroupData | null>(null);
-  const [newGroup, setNewGroup] = useState({
-    name: '',
-    description: '',
-    type: 'community' as GroupData['type']
-  });
 
   const filteredGroups = groups.filter(group => {
     const matchesSearch = group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -55,19 +72,7 @@ export const GroupManagement: React.FC = () => {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  const handleCreateGroup = () => {
-    const group: GroupData = {
-      id: Date.now().toString(),
-      ...newGroup,
-      memberCount: 0,
-      status: 'active',
-      createdBy: 'Current User',
-      createdAt: new Date().toISOString()
-    };
-    setGroups([group, ...groups]);
-    setNewGroup({ name: '', description: '', type: 'community' });
-    setShowCreateModal(false);
-  };
+  
 
   const handleDeleteGroup = (groupId: string) => {
     setGroups(groups.filter(group => group.id !== groupId));
@@ -102,11 +107,17 @@ export const GroupManagement: React.FC = () => {
   const totalMembers = groups.reduce((sum, group) => sum + group.memberCount, 0);
   const activeGroups = groups.filter(g => g.status === 'active').length;
 
+  const getInitials = (name: string) => {
+    const parts = name.trim().split(/\s+/);
+    const letters = parts.slice(0, 2).map(p => p[0]).join('');
+    return letters.toUpperCase();
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Group Management</h1>
-        <p className="text-gray-600">Create and manage community groups</p>
+        <p className="text-gray-600">Manage community groups</p>
       </div>
 
       {/* Stats Cards */}
@@ -186,34 +197,39 @@ export const GroupManagement: React.FC = () => {
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create Group</span>
-          </button>
+          
         </div>
       </div>
 
       {/* Groups Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredGroups.map((group) => (
-          <div key={group.id} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">{group.name}</h3>
-                <p className="text-sm text-gray-600 mb-3">{group.description}</p>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(group.type)}`}>
-                    {group.type}
-                  </span>
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(group.status)}`}>
-                    {group.status}
-                  </span>
+          <div key={group.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+            <div className="relative">
+              {group.profileImage ? (
+                <img src={group.profileImage} alt={`${group.name} profile`} className="w-full h-48 object-cover" />
+              ) : (
+                <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500 text-xl font-semibold">
+                  {getInitials(group.name)}
                 </div>
+              )}
+              <div className="absolute top-4 left-4">
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(group.status)}`}>
+                  {group.status}
+                </span>
               </div>
             </div>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">{group.name}</h3>
+              <p className="text-sm text-gray-600 mb-3 line-clamp-2">{group.description}</p>
+              <div className="flex flex-wrap gap-2 mb-3">
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(group.type)}`}>
+                  {group.type}
+                </span>
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(group.status)}`}>
+                  {group.status}
+                </span>
+              </div>
 
             <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
               <div className="flex items-center space-x-1">
@@ -263,73 +279,18 @@ export const GroupManagement: React.FC = () => {
               </button>
             </div>
           </div>
+          </div>
         ))}
       </div>
 
-      {/* Create Group Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Create New Group</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Group Name</label>
-                <input
-                  type="text"
-                  value={newGroup.name}
-                  onChange={(e) => setNewGroup({...newGroup, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter group name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea
-                  value={newGroup.description}
-                  onChange={(e) => setNewGroup({...newGroup, description: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows={3}
-                  placeholder="Describe the group's purpose"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Group Type</label>
-                <select
-                  value={newGroup.type}
-                  onChange={(e) => setNewGroup({...newGroup, type: e.target.value as GroupData['type']})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="community">Community</option>
-                  <option value="church">Church</option>
-                  <option value="union">Union</option>
-                  <option value="association">Association</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateGroup}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Create Group
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       {/* Group Details Modal */}
       {selectedGroup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">{selectedGroup.name}</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{selectedGroup!.name}</h3>
               <button
                 onClick={() => setSelectedGroup(null)}
                 className="text-gray-400 hover:text-gray-600"
@@ -340,35 +301,35 @@ export const GroupManagement: React.FC = () => {
             
             <div className="space-y-4">
               <div className="flex flex-wrap gap-2">
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(selectedGroup.type)}`}>
-                  {selectedGroup.type}
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(selectedGroup!.type)}`}>
+                  {selectedGroup!.type}
                 </span>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedGroup.status)}`}>
-                  {selectedGroup.status}
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedGroup!.status)}`}>
+                  {selectedGroup!.status}
                 </span>
               </div>
               
               <div>
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Description</h4>
-                <p className="text-gray-600">{selectedGroup.description}</p>
+                <p className="text-gray-600">{selectedGroup!.description}</p>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h4 className="text-sm font-medium text-gray-700">Members</h4>
-                  <p className="text-gray-600">{selectedGroup.memberCount}</p>
+                  <p className="text-gray-600">{selectedGroup!.memberCount}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-700">Created By</h4>
-                  <p className="text-gray-600">{selectedGroup.createdBy}</p>
+                  <p className="text-gray-600">{selectedGroup!.createdBy}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-700">Created Date</h4>
-                  <p className="text-gray-600">{new Date(selectedGroup.createdAt).toLocaleDateString()}</p>
+                  <p className="text-gray-600">{new Date(selectedGroup!.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-700">Status</h4>
-                  <p className="text-gray-600 capitalize">{selectedGroup.status}</p>
+                  <p className="text-gray-600 capitalize">{selectedGroup!.status}</p>
                 </div>
               </div>
 
