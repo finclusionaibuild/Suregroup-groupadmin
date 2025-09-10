@@ -1,4 +1,3 @@
-import React from 'react';
 import { 
   Home, 
   Users, 
@@ -22,11 +21,8 @@ import {
   Flag,
   BarChart3,
   Briefcase,
-  GraduationCap,
-  Heart,
   MapPin,
   Zap,
-  LogOut,
   Database
 } from 'lucide-react';
 import { NavigationGroup } from '../types';
@@ -122,8 +118,8 @@ export const getGroupAdminNavigation = (): NavigationGroup[] => [
     title: 'Financial Services',
     items: [
       { id: 'wallet-management', label: 'Wallet Management', icon: CreditCard },
-      { id: 'referrals-rewards', label: 'Referrals & Rewards', icon: Award },
-      { id: 'benefit-management', label: 'Benefit Management', icon: Gift }
+      { id: 'donation-management', label: 'Donation Management', icon: DollarSign },
+      { id: 'referrals-rewards', label: 'Referrals & Rewards', icon: Award }
     ]
   },
   {

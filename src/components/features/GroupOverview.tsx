@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Calendar, MessageSquare, TrendingUp, Settings, Eye, ExternalLink, Edit, BarChart3 } from 'lucide-react';
+import { Users, Calendar, MessageSquare, TrendingUp, Edit, BarChart3 } from 'lucide-react';
 
 interface GroupStats {
   totalMembers: number;
@@ -30,7 +30,7 @@ interface GroupInfo {
 }
 
 export const GroupOverview: React.FC = () => {
-  const [groupInfo] = useState<GroupInfo>({
+  const [groupInfo, setGroupInfo] = useState<GroupInfo>({
     id: '1',
     name: 'Community Church',
     description: 'A welcoming community focused on faith, fellowship, and service to others.',
@@ -99,6 +99,7 @@ export const GroupOverview: React.FC = () => {
   ]);
 
   const [showEditModal, setShowEditModal] = useState(false);
+  const [editData, setEditData] = useState<GroupInfo | null>(null);
 
   return (
     <div className="p-6">
@@ -137,7 +138,10 @@ export const GroupOverview: React.FC = () => {
               </div>
             </div>
             <button
-              onClick={() => setShowEditModal(true)}
+              onClick={() => {
+                setEditData(groupInfo);
+                setShowEditModal(true);
+              }}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
             >
               <Edit className="w-4 h-4" />
@@ -302,6 +306,122 @@ export const GroupOverview: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Group Modal */}
+      {showEditModal && editData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Edit Group</h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input
+                  type="text"
+                  value={editData.name}
+                  onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <input
+                  type="text"
+                  value={editData.category}
+                  onChange={(e) => setEditData({ ...editData, category: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={editData.description}
+                  onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                <input
+                  type="text"
+                  value={editData.location}
+                  onChange={(e) => setEditData({ ...editData, location: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Visibility</label>
+                <select
+                  value={editData.visibility}
+                  onChange={(e) => setEditData({ ...editData, visibility: e.target.value as GroupInfo['visibility'] })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="public">Public</option>
+                  <option value="private">Private</option>
+                  <option value="invite-only">Invite Only</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                <input
+                  type="url"
+                  value={editData.website || ''}
+                  onChange={(e) => setEditData({ ...editData, website: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
+                <input
+                  type="email"
+                  value={editData.contactEmail}
+                  onChange={(e) => setEditData({ ...editData, contactEmail: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Profile Image URL</label>
+                <input
+                  type="url"
+                  value={editData.profileImage || ''}
+                  onChange={(e) => setEditData({ ...editData, profileImage: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="https://..."
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (editData) {
+                    setGroupInfo(editData);
+                  }
+                  setShowEditModal(false);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,56 +1,50 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Plus, Calendar, MapPin, Users, Clock, Edit, Trash2, Eye } from 'lucide-react';
-import { EventData } from '../../types';
+import { EventData, EventRSVP } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+
+// Minimal calendar grid for current month with highlights
+const CalendarGrid: React.FC<{ events: EventData[]; onSelectDate: (date: string) => void }> = ({ events, onSelectDate }) => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const startWeekday = firstDay.getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells: Array<{ day: number | null; dateStr?: string; hasEvent?: boolean }> = [];
+  for (let i = 0; i < startWeekday; i++) cells.push({ day: null });
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = new Date(year, month, d).toISOString().slice(0, 10);
+    const hasEvent = events.some(e => e.date === dateStr);
+    cells.push({ day: d, dateStr, hasEvent });
+  }
+  while (cells.length % 7 !== 0) cells.push({ day: null });
+  return (
+    <div>
+      <div className="grid grid-cols-7 text-xs text-gray-500 mb-2">
+        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+          <div key={d} className="text-center py-1">{d}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-2">
+        {cells.map((c, idx) => (
+          <button
+            key={idx}
+            disabled={!c.day}
+            onClick={() => c.dateStr && onSelectDate(c.dateStr)}
+            className={`h-16 border rounded flex items-center justify-center ${c.day ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'} ${c.hasEvent ? 'border-blue-400' : 'border-gray-200'}`}
+          >
+            <span className={`text-sm ${c.hasEvent ? 'text-blue-600 font-semibold' : 'text-gray-700'}`}>{c.day ?? ''}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export const EventManagement: React.FC = () => {
   const { user } = useAuth();
-  const [events, setEvents] = useState<EventData[]>([
-    {
-      id: '1',
-      title: 'Sunday Service',
-      description: 'Weekly worship service with communion',
-      date: '2025-01-19',
-      time: '10:00',
-      location: 'Main Sanctuary',
-      groupId: '1',
-      groupName: 'Community Church',
-      maxAttendees: 300,
-      currentAttendees: 245,
-      status: 'upcoming',
-      createdBy: 'Pastor John',
-      createdAt: '2025-01-01T00:00:00Z'
-    },
-    {
-      id: '2',
-      title: 'Youth Game Night',
-      description: 'Fun evening with games, snacks, and fellowship',
-      date: '2025-01-17',
-      time: '19:00',
-      location: 'Youth Center',
-      groupId: '2',
-      groupName: 'Youth Ministry',
-      maxAttendees: 50,
-      currentAttendees: 32,
-      status: 'upcoming',
-      createdBy: 'Youth Pastor Sarah',
-      createdAt: '2025-01-05T00:00:00Z'
-    },
-    {
-      id: '3',
-      title: 'Union Meeting',
-      description: 'Monthly union meeting to discuss workplace issues',
-      date: '2025-01-15',
-      time: '18:00',
-      location: 'Union Hall',
-      groupId: '3',
-      groupName: 'Local Union Chapter',
-      currentAttendees: 89,
-      status: 'completed',
-      createdBy: 'Union Rep Mike',
-      createdAt: '2025-01-10T00:00:00Z'
-    }
-  ]);
+  const [events, setEvents] = useState<EventData[]>([]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'upcoming' | 'ongoing' | 'completed' | 'cancelled'>('all');
@@ -64,8 +58,14 @@ export const EventManagement: React.FC = () => {
     time: '',
     location: '',
     groupId: '1',
-    maxAttendees: ''
+    maxAttendees: '',
+    bannerImageUrl: '',
+    rsvpMode: 'open' as 'open' | 'invite-only',
+    limitAttendees: ''
   });
+  const [editEvent, setEditEvent] = useState<EventData | null>(null);
+  const [rsvps, setRsvps] = useState<EventRSVP[]>([]);
+  const [view, setView] = useState<'list' | 'calendar'>('list');
 
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -75,19 +75,35 @@ export const EventManagement: React.FC = () => {
     return matchesSearch && matchesStatus && matchesGroup;
   });
 
+  // Pull group list from localStorage maintained by GroupManagement
+  const groups = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('groups');
+      const parsed = raw ? JSON.parse(raw) as { id: string; name: string }[] : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const resolveGroupName = (id: string) => groups.find(g => g.id === id)?.name || 'Unknown Group';
+
   const handleCreateEvent = () => {
     const event: EventData = {
       id: Date.now().toString(),
       ...newEvent,
-      groupName: 'Community Church', // This would be looked up from groupId
+      groupName: resolveGroupName(newEvent.groupId),
       maxAttendees: newEvent.maxAttendees ? parseInt(newEvent.maxAttendees) : undefined,
+      bannerImageUrl: newEvent.bannerImageUrl || undefined,
+      rsvpMode: newEvent.rsvpMode,
+      limitAttendees: newEvent.limitAttendees ? parseInt(newEvent.limitAttendees) : undefined,
       currentAttendees: 0,
       status: 'upcoming',
       createdBy: 'Current User',
       createdAt: new Date().toISOString()
     };
     setEvents([event, ...events]);
-    setNewEvent({ title: '', description: '', date: '', time: '', location: '', groupId: '1', maxAttendees: '' });
+    setNewEvent({ title: '', description: '', date: '', time: '', location: '', groupId: '1', maxAttendees: '', bannerImageUrl: '', rsvpMode: 'open', limitAttendees: '' });
     setShowCreateModal(false);
   };
 
@@ -100,6 +116,42 @@ export const EventManagement: React.FC = () => {
       event.id === eventId ? { ...event, status } : event
     ));
   };
+
+  const handleStartEdit = (event: EventData) => {
+    setEditEvent({ ...event });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editEvent) return;
+    const updated = { ...editEvent, groupName: resolveGroupName(editEvent.groupId) };
+    setEvents(events.map(e => e.id === updated.id ? updated : e));
+    setEditEvent(null);
+  };
+
+  // Persist events/RSVPs to localStorage and hydrate on load
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('events');
+      if (raw) {
+        const parsed = JSON.parse(raw) as EventData[];
+        if (Array.isArray(parsed)) {
+          setEvents(parsed);
+        }
+      }
+      const rawR = localStorage.getItem('event_rsvps');
+      if (rawR) {
+        const parsedR = JSON.parse(rawR) as EventRSVP[];
+        if (Array.isArray(parsedR)) setRsvps(parsedR);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('events', JSON.stringify(events));
+      localStorage.setItem('event_rsvps', JSON.stringify(rsvps));
+    } catch {}
+  }, [events, rsvps]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -120,9 +172,29 @@ export const EventManagement: React.FC = () => {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Event Management</h1>
-        <p className="text-gray-600">Create and manage group events</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Event Management</h1>
+          <p className="text-gray-600">Create and manage group events</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setView(view === 'list' ? 'calendar' : 'list')}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
+            aria-label="Toggle calendar view"
+          >
+            {view === 'list' ? 'Calendar View' : 'List View'}
+          </button>
+          {canCreateEvents && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create New Event</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -197,9 +269,9 @@ export const EventManagement: React.FC = () => {
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="all">All Groups</option>
-            <option value="1">Community Church</option>
-            <option value="2">Youth Ministry</option>
-            <option value="3">Local Union Chapter</option>
+            {groups.map(g => (
+              <option key={g.id} value={g.id}>{g.name}</option>
+            ))}
           </select>
           {canCreateEvents && (
             <button
@@ -213,12 +285,16 @@ export const EventManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Events Grid */}
+      {/* Events Grid or Calendar */}
+      {view === 'list' ? (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredEvents.map((event) => (
           <div key={event.id} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
+                {event.bannerImageUrl && (
+                  <img src={event.bannerImageUrl} alt="Event banner" className="w-full h-32 object-cover rounded-md mb-3" />
+                )}
                 <h3 className="text-lg font-semibold text-gray-900 mb-1">{event.title}</h3>
                 <p className="text-sm text-gray-600 mb-3">{event.description}</p>
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(event.status)}`}>
@@ -260,7 +336,7 @@ export const EventManagement: React.FC = () => {
                 
                 {canCreateEvents && (
                   <>
-                    <button className="text-gray-600 hover:text-gray-900">
+                    <button onClick={() => handleStartEdit(event)} className="text-gray-600 hover:text-gray-900">
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
@@ -306,6 +382,12 @@ export const EventManagement: React.FC = () => {
           </div>
         ))}
       </div>
+      ) : (
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          {/* Simple calendar grid for current month */}
+          <CalendarGrid events={events} onSelectDate={(d) => setSearchTerm(new Date(d).toLocaleDateString())} />
+        </div>
+      )}
 
       {/* Create Event Modal */}
       {showCreateModal && canCreateEvents && (
@@ -370,9 +452,10 @@ export const EventManagement: React.FC = () => {
                   onChange={(e) => setNewEvent({...newEvent, groupId: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="1">Community Church</option>
-                  <option value="2">Youth Ministry</option>
-                  <option value="3">Local Union Chapter</option>
+                  {groups.length === 0 && <option value="">No groups found</option>}
+                  {groups.map(g => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -384,6 +467,49 @@ export const EventManagement: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Leave empty for unlimited"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Banner Image URL</label>
+                <input
+                  type="url"
+                  value={newEvent.bannerImageUrl}
+                  onChange={(e) => setNewEvent({...newEvent, bannerImageUrl: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">RSVP Mode</label>
+                  <select
+                    value={newEvent.rsvpMode}
+                    onChange={(e) => setNewEvent({...newEvent, rsvpMode: e.target.value as 'open' | 'invite-only'})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="open">Open</option>
+                    <option value="invite-only">Invite Only</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Limit Attendees</label>
+                  <input
+                    type="number"
+                    value={newEvent.limitAttendees}
+                    onChange={(e) => setNewEvent({...newEvent, limitAttendees: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Optional limit"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Max Attendees (Legacy)</label>
+                  <input
+                    type="number"
+                    value={newEvent.maxAttendees}
+                    onChange={(e) => setNewEvent({...newEvent, maxAttendees: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Leave empty for unlimited"
+                  />
+                </div>
               </div>
             </div>
             <div className="flex justify-end space-x-3 mt-6">
@@ -419,6 +545,9 @@ export const EventManagement: React.FC = () => {
             </div>
             
             <div className="space-y-4">
+              {selectedEvent.bannerImageUrl && (
+                <img src={selectedEvent.bannerImageUrl} alt="Event banner" className="w-full h-48 object-cover rounded-md" />
+              )}
               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedEvent.status)}`}>
                 {selectedEvent.status}
               </span>
@@ -449,6 +578,16 @@ export const EventManagement: React.FC = () => {
                   </p>
                 </div>
                 <div>
+                  <h4 className="text-sm font-medium text-gray-700">RSVP Mode</h4>
+                  <p className="text-gray-600 capitalize">{selectedEvent.rsvpMode}</p>
+                </div>
+                {selectedEvent.limitAttendees !== undefined && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700">Limit Attendees</h4>
+                    <p className="text-gray-600">{selectedEvent.limitAttendees}</p>
+                  </div>
+                )}
+                <div>
                   <h4 className="text-sm font-medium text-gray-700">Created By</h4>
                   <p className="text-gray-600">{selectedEvent.createdBy}</p>
                 </div>
@@ -458,21 +597,115 @@ export const EventManagement: React.FC = () => {
                 </div>
               </div>
 
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">RSVPs</h4>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {rsvps.filter(r => r.eventId === selectedEvent.id).map(r => (
+                    <div key={r.id} className="flex items-center justify-between text-sm bg-gray-50 rounded p-2">
+                      <span className="text-gray-700">{r.userName}</span>
+                      <span className="text-gray-400">{new Date(r.timestamp).toLocaleString()}</span>
+                    </div>
+                  ))}
+                  {rsvps.filter(r => r.eventId === selectedEvent.id).length === 0 && (
+                    <div className="text-sm text-gray-500">No RSVPs yet.</div>
+                  )}
+                </div>
+              </div>
+
               <div className="flex space-x-2 pt-4">
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                  Manage Attendees
-                </button>
                 {canCreateEvents && (
-                  <>
-                    <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
-                      Send Notifications
-                    </button>
-                    <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-                      Edit Event
-                    </button>
-                  </>
+                  <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                    Send Announcement
+                  </button>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Event Modal */}
+      {editEvent && canCreateEvents && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Edit Event</h3>
+              <button onClick={() => setEditEvent(null)} className="text-gray-400 hover:text-gray-600">×</button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Event Title</label>
+                <input
+                  type="text"
+                  value={editEvent.title}
+                  onChange={(e) => setEditEvent({ ...editEvent!, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={editEvent.description}
+                  onChange={(e) => setEditEvent({ ...editEvent!, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <input
+                    type="date"
+                    value={editEvent.date}
+                    onChange={(e) => setEditEvent({ ...editEvent!, date: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                  <input
+                    type="time"
+                    value={editEvent.time}
+                    onChange={(e) => setEditEvent({ ...editEvent!, time: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                <input
+                  type="text"
+                  value={editEvent.location}
+                  onChange={(e) => setEditEvent({ ...editEvent!, location: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Group</label>
+                <select
+                  value={editEvent.groupId}
+                  onChange={(e) => setEditEvent({ ...editEvent!, groupId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {groups.length === 0 && <option value="">No groups found</option>}
+                  {groups.map(g => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Max Attendees (Optional)</label>
+                <input
+                  type="number"
+                  value={editEvent.maxAttendees ?? ''}
+                  onChange={(e) => setEditEvent({ ...editEvent!, maxAttendees: e.target.value ? parseInt(e.target.value) : undefined })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus-border-transparent"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <button onClick={() => setEditEvent(null)} className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={handleSaveEdit} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Changes</button>
             </div>
           </div>
         </div>

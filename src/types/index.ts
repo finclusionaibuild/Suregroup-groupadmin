@@ -1,6 +1,5 @@
-import { DivideIcon as LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
-export type UserRole = 'super-admin' | 'product-admin' | 'group-admin' | 'member' | 'vendor';
 export type UserRole = 'super-admin' | 'product-admin' | 'group-admin' | 'member' | 'vendor' | 'developer';
 
 export interface User {
@@ -89,11 +88,22 @@ export interface EventData {
   location: string;
   groupId: string;
   groupName: string;
+  bannerImageUrl?: string;
+  rsvpMode: 'open' | 'invite-only';
+  limitAttendees?: number;
   maxAttendees?: number;
   currentAttendees: number;
   status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
   createdBy: string;
   createdAt: string;
+}
+
+export interface EventRSVP {
+  id: string;
+  eventId: string;
+  userId: string;
+  userName: string;
+  timestamp: string;
 }
 
 // Feature Management Types
@@ -286,4 +296,37 @@ export interface DeveloperProfile {
     liveliness: boolean;
   };
   createdAt: string;
+}
+
+// Donation Management Types
+export interface DonationCampaign {
+  id: string;
+  title: string;
+  description: string;
+  targetAmount?: number;
+  amountRaised: number;
+  startDate: string;
+  endDate: string;
+  status: 'upcoming' | 'active' | 'closed';
+  visibility: 'public' | 'restricted';
+  visibleRoles?: string[];
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface DonationRecord {
+  id: string;
+  campaignId: string;
+  memberId: string;
+  memberName: string;
+  amount: number;
+  currency: string;
+  createdAt: string;
+  note?: string;
+}
+
+export interface DonationWallet {
+  balance: number;
+  currency: string;
+  updatedAt: string;
 }

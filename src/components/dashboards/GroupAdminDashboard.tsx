@@ -7,13 +7,10 @@ import { getGroupAdminNavigation } from '../../config/navigation';
 import { DashboardMetric } from '../../types';
 import { 
   Users, 
-  MessageSquare, 
   Calendar,
   Bell,
   TrendingUp,
-  Settings,
   ArrowRight,
-  Plus,
   Send,
   UserPlus,
   Flag
@@ -34,11 +31,18 @@ export const GroupAdminDashboard: React.FC = () => {
 
   const quickActions = [
     { 
-      id: 'create-group', 
-      label: 'Create Group', 
-      icon: Plus, 
+      id: 'marketplace', 
+      label: 'Marketplace', 
+      icon: TrendingUp, 
+      color: 'bg-indigo-500',
+      action: () => setActiveFeature('marketplace-management')
+    },
+    { 
+      id: 'wallet', 
+      label: 'View Wallet', 
+      icon: TrendingUp, 
       color: 'bg-blue-500',
-      action: () => setActiveFeature('group-setup')
+      action: () => setActiveFeature('wallet-management')
     },
     { 
       id: 'manage-members', 
